@@ -1,0 +1,77 @@
+{
+  "mockBidRequest": {
+    "id": "req-no-mtype",
+    "imp": [
+      {
+        "id": "imp-1",
+        "ext": { "bidder": { "placementId": "sup12345" } },
+        "banner": { "w": 300, "h": 250 }
+      }
+    ]
+  },
+  "httpCalls": [
+    {
+      "expectedRequest": {
+        "uri": "https://exchange.example.com/rtb/sup12345",
+        "body": {
+          "id": "req-no-mtype",
+          "imp": [
+            {
+              "id": "imp-1",
+              "ext": { "bidder": { "placementId": "sup12345" } },
+              "banner": { "w": 300, "h": 250 }
+            }
+          ]
+        },
+        "impIDs": ["imp-1"]
+      },
+      "mockResponse": {
+        "status": 200,
+        "body": {
+          "id": "req-no-mtype",
+          "cur": "USD",
+          "seatbid": [
+            {
+              "bid": [
+                {
+                  "id": "bid-1",
+                  "impid": "imp-1",
+                  "adm": "<div>ad</div>",
+                  "price": 1.0
+                },
+                {
+                  "id": "bid-2",
+                  "impid": "imp-unknown",
+                  "adm": "<div>ad</div>",
+                  "price": 1.0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "expectedBidResponses": [
+    {
+      "currency": "USD",
+      "bids": [
+        {
+          "bid": {
+            "id": "bid-1",
+            "impid": "imp-1",
+            "adm": "<div>ad</div>",
+            "price": 1.0
+          },
+          "type": "banner"
+        }
+      ]
+    }
+  ],
+  "expectedMakeBidsErrors": [
+    {
+      "value": "Unable to determine media type for bid with impid: \"imp-unknown\"",
+      "comparison": "literal"
+    }
+  ]
+}

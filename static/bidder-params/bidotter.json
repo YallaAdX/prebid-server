@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "BidOtter Adapter Params",
+  "description": "A schema which validates params accepted by the BidOtter adapter",
+
+  "type": "object",
+  "properties": {
+    "placementId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Placement ID issued by BidOtter"
+    }
+  },
+  "required": ["placementId"]
+}

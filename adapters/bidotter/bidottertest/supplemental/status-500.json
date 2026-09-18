@@ -1,0 +1,37 @@
+{
+  "mockBidRequest": {
+    "id": "req-500",
+    "imp": [
+      {
+        "id": "imp-1",
+        "ext": { "bidder": { "placementId": "sup12345" } },
+        "video": { "mimes": ["video/mp4"] }
+      }
+    ]
+  },
+  "httpCalls": [
+    {
+      "expectedRequest": {
+        "uri": "https://exchange.example.com/rtb/sup12345",
+        "body": {
+          "id": "req-500",
+          "imp": [
+            {
+              "id": "imp-1",
+              "ext": { "bidder": { "placementId": "sup12345" } },
+              "video": { "mimes": ["video/mp4"] }
+            }
+          ]
+        },
+        "impIDs": ["imp-1"]
+      },
+      "mockResponse": { "status": 500, "body": {} }
+    }
+  ],
+  "expectedMakeBidsErrors": [
+    {
+      "value": "Unexpected status code: 500. Run with request.debug = 1 for more info",
+      "comparison": "literal"
+    }
+  ]
+}

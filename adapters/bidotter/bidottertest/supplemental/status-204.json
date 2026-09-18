@@ -1,0 +1,32 @@
+{
+  "mockBidRequest": {
+    "id": "req-204",
+    "imp": [
+      {
+        "id": "imp-1",
+        "ext": { "bidder": { "placementId": "sup12345" } },
+        "video": { "mimes": ["video/mp4"] }
+      }
+    ]
+  },
+  "httpCalls": [
+    {
+      "expectedRequest": {
+        "uri": "https://exchange.example.com/rtb/sup12345",
+        "body": {
+          "id": "req-204",
+          "imp": [
+            {
+              "id": "imp-1",
+              "ext": { "bidder": { "placementId": "sup12345" } },
+              "video": { "mimes": ["video/mp4"] }
+            }
+          ]
+        },
+        "impIDs": ["imp-1"]
+      },
+      "mockResponse": { "status": 204, "body": {} }
+    }
+  ],
+  "expectedBidResponses": []
+}

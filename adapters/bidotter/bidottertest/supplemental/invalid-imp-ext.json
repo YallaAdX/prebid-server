@@ -1,0 +1,19 @@
+{
+  "mockBidRequest": {
+    "id": "req-bad-ext",
+    "imp": [
+      {
+        "id": "imp-1",
+        "ext": { "bidder": { "placementId": 42 } },
+        "video": { "mimes": ["video/mp4"] }
+      }
+    ]
+  },
+  "httpCalls": [],
+  "expectedMakeRequestsErrors": [
+    {
+      "value": "Invalid imp.ext.bidder for impression index 0. Error Information: cannot unmarshal openrtb_ext.ImpExtBidotter.PlacementID: expects \" or n, but found 4",
+      "comparison": "literal"
+    }
+  ]
+}
