@@ -1,0 +1,106 @@
+{
+  "mockBidRequest": {
+    "id": "video-request-id",
+    "tmax": 500,
+    "imp": [
+      {
+        "id": "video-imp-id",
+        "bidfloor": 2.0,
+        "ext": {
+          "bidder": {
+            "placementId": "sup12345"
+          }
+        },
+        "video": {
+          "mimes": ["video/mp4"],
+          "protocols": [2, 3, 7],
+          "w": 1920,
+          "h": 1080
+        }
+      }
+    ],
+    "app": {
+      "bundle": "com.example.ctv",
+      "publisher": { "id": "pub-1" }
+    },
+    "device": { "ua": "test-ua", "ip": "1.2.3.4" }
+  },
+  "httpCalls": [
+    {
+      "expectedRequest": {
+        "uri": "https://exchange.example.com/rtb/sup12345",
+        "headers": {
+          "Content-Type": ["application/json;charset=utf-8"],
+          "Accept": ["application/json"]
+        },
+        "body": {
+          "id": "video-request-id",
+          "tmax": 500,
+          "imp": [
+            {
+              "id": "video-imp-id",
+              "bidfloor": 2.0,
+              "ext": {
+                "bidder": {
+                  "placementId": "sup12345"
+                }
+              },
+              "video": {
+                "mimes": ["video/mp4"],
+                "protocols": [2, 3, 7],
+                "w": 1920,
+                "h": 1080
+              }
+            }
+          ],
+          "app": {
+            "bundle": "com.example.ctv",
+            "publisher": { "id": "pub-1" }
+          },
+          "device": { "ua": "test-ua", "ip": "1.2.3.4" }
+        },
+        "impIDs": ["video-imp-id"]
+      },
+      "mockResponse": {
+        "status": 200,
+        "body": {
+          "id": "video-request-id",
+          "cur": "USD",
+          "seatbid": [
+            {
+              "seat": "bidotter",
+              "bid": [
+                {
+                  "id": "bid-1",
+                  "impid": "video-imp-id",
+                  "crid": "cr-1",
+                  "adm": "<VAST version=\"3.0\"></VAST>",
+                  "price": 6.5,
+                  "mtype": 2
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "expectedBidResponses": [
+    {
+      "currency": "USD",
+      "bids": [
+        {
+          "bid": {
+            "id": "bid-1",
+            "impid": "video-imp-id",
+            "crid": "cr-1",
+            "adm": "<VAST version=\"3.0\"></VAST>",
+            "price": 6.5,
+            "mtype": 2
+          },
+          "type": "video"
+        }
+      ]
+    }
+  ]
+}

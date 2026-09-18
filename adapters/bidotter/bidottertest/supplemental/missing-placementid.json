@@ -1,0 +1,19 @@
+{
+  "mockBidRequest": {
+    "id": "req-missing-param",
+    "imp": [
+      {
+        "id": "imp-1",
+        "ext": { "bidder": {} },
+        "video": { "mimes": ["video/mp4"] }
+      }
+    ]
+  },
+  "httpCalls": [],
+  "expectedMakeRequestsErrors": [
+    {
+      "value": "Missing required parameter placementId",
+      "comparison": "literal"
+    }
+  ]
+}

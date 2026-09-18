@@ -1,0 +1,23 @@
+endpoint: https://eu.bidotter.com/rtb/{{.PlacementID}}
+maintainer:
+  email: prebid@bidotter.com
+geoscope:
+  - global
+modifyingVastXmlAllowed: true
+openrtb:
+  version: "2.6"
+  multiformat-supported: false
+capabilities:
+  app:
+    mediaTypes:
+      - banner
+      - video
+      - audio
+  site:
+    mediaTypes:
+      - banner
+      - video
+      - audio
+  dooh:
+    mediaTypes:
+      - video

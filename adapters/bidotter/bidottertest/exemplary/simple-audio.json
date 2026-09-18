@@ -1,0 +1,100 @@
+{
+  "mockBidRequest": {
+    "id": "audio-request-id",
+    "tmax": 500,
+    "imp": [
+      {
+        "id": "audio-imp-id",
+        "bidfloor": 1.0,
+        "ext": {
+          "bidder": {
+            "placementId": "sup12345"
+          }
+        },
+        "audio": {
+          "mimes": ["audio/mp4", "audio/mpeg"]
+        }
+      }
+    ],
+    "site": {
+      "page": "http://www.example.com",
+      "publisher": { "id": "pub-1" }
+    },
+    "device": { "ua": "test-ua", "ip": "1.2.3.4" }
+  },
+  "httpCalls": [
+    {
+      "expectedRequest": {
+        "uri": "https://exchange.example.com/rtb/sup12345",
+        "headers": {
+          "Content-Type": ["application/json;charset=utf-8"],
+          "Accept": ["application/json"]
+        },
+        "body": {
+          "id": "audio-request-id",
+          "tmax": 500,
+          "imp": [
+            {
+              "id": "audio-imp-id",
+              "bidfloor": 1.0,
+              "ext": {
+                "bidder": {
+                  "placementId": "sup12345"
+                }
+              },
+              "audio": {
+                "mimes": ["audio/mp4", "audio/mpeg"]
+              }
+            }
+          ],
+          "site": {
+            "page": "http://www.example.com",
+            "publisher": { "id": "pub-1" }
+          },
+          "device": { "ua": "test-ua", "ip": "1.2.3.4" }
+        },
+        "impIDs": ["audio-imp-id"]
+      },
+      "mockResponse": {
+        "status": 200,
+        "body": {
+          "id": "audio-request-id",
+          "cur": "USD",
+          "seatbid": [
+            {
+              "seat": "bidotter",
+              "bid": [
+                {
+                  "id": "bid-1",
+                  "impid": "audio-imp-id",
+                  "crid": "cr-1",
+                  "adm": "<VAST version=\"4.1\"></VAST>",
+                  "price": 3.0,
+                  "mtype": 3
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "expectedBidResponses": [
+    {
+      "currency": "USD",
+      "bids": [
+        {
+          "bid": {
+            "id": "bid-1",
+            "impid": "audio-imp-id",
+            "crid": "cr-1",
+            "adm": "<VAST version=\"4.1\"></VAST>",
+            "price": 3.0,
+            "mtype": 3
+          },
+          "type": "audio"
+        }
+      ]
+    }
+  ]
+}
