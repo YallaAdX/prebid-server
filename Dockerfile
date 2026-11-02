@@ -40,7 +40,7 @@ RUN chmod -R a+r static/ stored_requests/data
 
 # Installing libatomic1 as it is a runtime dependency for some modules
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates mtr libatomic1 && \
+    apt-get install -y --no-install-recommends ca-certificates mtr libatomic1 wget && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN addgroup --system --gid 2001 prebidgroup && adduser --system --uid 1001 --ingroup prebidgroup prebid
 USER prebid

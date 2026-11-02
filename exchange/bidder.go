@@ -37,6 +37,7 @@ import (
 	"github.com/prebid/prebid-server/v4/errortypes"
 	"github.com/prebid/prebid-server/v4/metrics"
 	"github.com/prebid/prebid-server/v4/openrtb_ext"
+	"github.com/prebid/prebid-server/v4/util/egress"
 	"github.com/prebid/prebid-server/v4/util/jsonutil"
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -629,7 +630,7 @@ func (bidder *BidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 				// and cannot delay processing. We don't do anything result, as there is not much
 				// we can do about a timeout notification failure. We do not want to get stuck in
 				// a loop of trying to report timeouts to the timeout notifications.
-				go bidder.doTimeoutNotification(tb, req, logger)
+				go bidder.doTimeoutNotification(egress.MarkFrom(ctx), tb, req, logger)
 			}
 		}
 		return &httpCallInfo{
@@ -669,8 +670,8 @@ func (bidder *BidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	}
 }
 
-func (bidder *BidderAdapter) doTimeoutNotification(timeoutBidder adapters.TimeoutBidder, req *adapters.RequestData, logger util.LogMsg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+func (bidder *BidderAdapter) doTimeoutNotification(mark int, timeoutBidder adapters.TimeoutBidder, req *adapters.RequestData, logger util.LogMsg) {
+	ctx, cancel := context.WithTimeout(egress.WithMark(context.Background(), mark), 200*time.Millisecond)
 	defer cancel()
 
 	toReq, errMakeTimeoutNotification := timeoutBidder.MakeTimeoutNotification(req)

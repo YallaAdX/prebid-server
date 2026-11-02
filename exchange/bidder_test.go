@@ -2213,7 +2213,7 @@ func TestTimeoutNotificationOff(t *testing.T) {
 	if tb, ok := bidder.Bidder.(adapters.TimeoutBidder); !ok {
 		t.Error("Failed to cast bidder to a TimeoutBidder")
 	} else {
-		bidder.doTimeoutNotification(tb, &adapters.RequestData{}, logger.Warnf)
+		bidder.doTimeoutNotification(0, tb, &adapters.RequestData{}, logger.Warnf)
 	}
 }
 

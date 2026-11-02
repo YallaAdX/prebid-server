@@ -48,6 +48,7 @@ import (
 	"github.com/prebid/prebid-server/v4/stored_requests/backends/empty_fetcher"
 	"github.com/prebid/prebid-server/v4/stored_responses"
 	"github.com/prebid/prebid-server/v4/usersync"
+	"github.com/prebid/prebid-server/v4/util/egress"
 	"github.com/prebid/prebid-server/v4/util/httputil"
 	"github.com/prebid/prebid-server/v4/util/iputil"
 	"github.com/prebid/prebid-server/v4/util/jsonutil"
@@ -207,7 +208,13 @@ func (deps *endpointDeps) Auction(w http.ResponseWriter, r *http.Request, _ http
 	hookExecutor.SetActivityControl(activityControl)
 	hookExecutor.SetAccount(account)
 
-	ctx := context.Background()
+	egressMark, markErr := egress.MarkFromHeader(r.Header)
+	if markErr != nil {
+		writeError([]error{&errortypes.BadInput{Message: markErr.Error()}}, w, &labels)
+		return
+	}
+	// Copied by hand: the auction runs on a new context, not the request's.
+	ctx := egress.WithMark(context.Background(), egressMark)
 
 	timeout := deps.cfg.AuctionTimeouts.LimitAuctionTimeout(time.Duration(req.TMax) * time.Millisecond)
 	if timeout > 0 {
