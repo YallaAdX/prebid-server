@@ -39,6 +39,7 @@ import (
 	"github.com/prebid/prebid-server/v4/server/ssl"
 	storedRequestsConf "github.com/prebid/prebid-server/v4/stored_requests/config"
 	"github.com/prebid/prebid-server/v4/usersync"
+	"github.com/prebid/prebid-server/v4/util/egress"
 	"github.com/prebid/prebid-server/v4/util/jsonutil"
 	"github.com/prebid/prebid-server/v4/util/uuidutil"
 	"github.com/prebid/prebid-server/v4/version"
@@ -140,13 +141,19 @@ func New(cfg *config.Configuration, rateConvertor *currency.RateConverter) (r *R
 		logger.Infof("Could not read certificates file: %s \n", readCertErr.Error())
 	}
 
+	defaultMark, err := egress.DefaultMark()
+	if err != nil {
+		return nil, err
+	}
+	generalDialer := net.Dialer{
+		Timeout:   time.Duration(cfg.Client.Dialer.TimeoutSeconds) * time.Second,
+		KeepAlive: time.Duration(cfg.Client.Dialer.KeepAliveSeconds) * time.Second,
+		Control:   egress.Control(defaultMark),
+	}
 	generalHttpClient := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: defaultTransportDialContext(&net.Dialer{
-				Timeout:   time.Duration(cfg.Client.Dialer.TimeoutSeconds) * time.Second,
-				KeepAlive: time.Duration(cfg.Client.Dialer.KeepAliveSeconds) * time.Second,
-			}),
+		Transport: egress.NewTransport(&http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			DialContext:           defaultTransportDialContext(&generalDialer),
 			MaxConnsPerHost:       cfg.Client.MaxConnsPerHost,
 			MaxIdleConns:          cfg.Client.MaxIdleConns,
 			MaxIdleConnsPerHost:   cfg.Client.MaxIdleConnsPerHost,
@@ -154,7 +161,7 @@ func New(cfg *config.Configuration, rateConvertor *currency.RateConverter) (r *R
 			TLSClientConfig:       &tls.Config{RootCAs: certPool},
 			TLSHandshakeTimeout:   time.Duration(cfg.Client.TLSHandshakeTimeout) * time.Second,
 			ExpectContinueTimeout: time.Duration(cfg.Client.ExpectContinueTimeout) * time.Second,
-		},
+		}, generalDialer, defaultTransportDialContext),
 	}
 
 	cacheHttpClient := &http.Client{
