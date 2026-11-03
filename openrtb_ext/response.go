@@ -23,6 +23,33 @@ type ExtBidResponse struct {
 	Usersync map[BidderName]*ExtResponseSyncData `json:"usersync,omitempty"`
 	// Prebid defines the contract for bidresponse.ext.prebid
 	Prebid *ExtResponsePrebid `json:"prebid,omitempty"`
+	// BidderCallTiming is the bidotter fork's per-call split of each bidder's HTTP
+	// calls, one entry per call that got a response, so the caller can tell the
+	// network round trip from the bidder's own think time. responsetimemillis is
+	// the whole adapter stage and cannot be split after the fact.
+	BidderCallTiming map[BidderName][]ExtBidderCallTiming `json:"bidotter_calltiming,omitempty"`
+}
+
+// ExtBidderCallTiming is one bidder HTTP call, in microseconds measured from
+// just before the call is sent. Phases that did not happen are 0: DNS, connect
+// and TLS only appear on a new connection, and HTTP/2 reuses one for many calls.
+type ExtBidderCallTiming struct {
+	Status int `json:"status"`
+	// Reused is true when the call went out on a pooled connection.
+	Reused bool `json:"reused"`
+	// ConnWaitUS is GetConn to GotConn: the pool wait, plus the dial and TLS
+	// when the connection is new.
+	ConnWaitUS int64 `json:"conn_wait_us"`
+	DNSUS      int64 `json:"dns_us"`
+	ConnectUS  int64 `json:"connect_us"`
+	TLSUS      int64 `json:"tls_us"`
+	// TTFBUS is the request fully written to the first response byte: one
+	// network round trip plus the bidder's think time.
+	TTFBUS int64 `json:"ttfb_us"`
+	// BodyUS is the first response byte to the body fully read.
+	BodyUS int64 `json:"body_us"`
+	// TotalUS is the whole call, send to body read.
+	TotalUS int64 `json:"total_us"`
 }
 
 // ExtResponseDebug defines the contract for bidresponse.ext.debug

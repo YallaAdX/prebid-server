@@ -85,6 +85,8 @@ type bidRequestOptions struct {
 type extraBidderRespInfo struct {
 	respProcessingStartTime time.Time
 	seatNonBidBuilder       SeatNonBidBuilder
+	// callTimings has one entry per HTTP call that got a response.
+	callTimings []openrtb_ext.ExtBidderCallTiming
 }
 
 type extraAuctionResponseInfo struct {
@@ -281,6 +283,9 @@ func (bidder *BidderAdapter) requestBid(ctx context.Context, bidderRequest Bidde
 	// even if the timeout occurs sometime halfway through.
 	for i := 0; i < dataLen; i++ {
 		httpInfo := <-responseChannel
+		if httpInfo.timing != nil {
+			extraRespInfo.callTimings = append(extraRespInfo.callTimings, *httpInfo.timing)
+		}
 		// If this is a test bid, capture debugging info from the requests.
 		// Write debug data to ext in case if:
 		// - headerDebugAllowed (debug override header specified correct) - it overrides all other debug restrictions
@@ -614,7 +619,8 @@ func (bidder *BidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	}
 
 	httpCallStart := time.Now()
-	httpResp, err := ctxhttp.Do(ctx, bidder.Client, httpReq)
+	timer := newCallTimer(httpCallStart)
+	httpResp, err := ctxhttp.Do(timer.trace(ctx), bidder.Client, httpReq)
 	if err != nil {
 		bidder.logHealthCheck(false)
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -659,6 +665,7 @@ func (bidder *BidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 
 	bidder.logHealthCheck(true)
 	bidder.me.RecordBidderServerResponseTime(time.Since(httpCallStart))
+	timing := timer.snapshot(httpResp.StatusCode)
 	return &httpCallInfo{
 		request: req,
 		response: &adapters.ResponseData{
@@ -666,7 +673,8 @@ func (bidder *BidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 			Body:       respBody,
 			Headers:    httpResp.Header,
 		},
-		err: err,
+		err:    err,
+		timing: &timing,
 	}
 }
 
@@ -725,6 +733,8 @@ type httpCallInfo struct {
 	request  *adapters.RequestData
 	response *adapters.ResponseData
 	err      error
+	// timing is set when the call got a response and its body was read.
+	timing *openrtb_ext.ExtBidderCallTiming
 }
 
 // This function adds an httptrace.ClientTrace object to the context so, if connection with the bidder

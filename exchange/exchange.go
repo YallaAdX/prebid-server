@@ -96,6 +96,8 @@ type seatResponseExtra struct {
 	HttpCalls []*openrtb_ext.ExtHttpCall
 	// NonBid contains non bid reason information
 	NonBid *openrtb_ext.NonBid
+	// CallTimings becomes response.ext.bidotter_calltiming.{bidder}.
+	CallTimings []openrtb_ext.ExtBidderCallTiming
 }
 
 type bidResponseWrapper struct {
@@ -784,6 +786,7 @@ func (e *exchange) getAllBids(
 			// Structure to record extra tracking data generated during bidding
 			ae := new(seatResponseExtra)
 			ae.ResponseTimeMillis = int(elapsed / time.Millisecond)
+			ae.CallTimings = extraBidderRespInfo.callTimings
 			if len(seatBids) != 0 {
 				ae.HttpCalls = seatBids[0].HttpCalls
 			}
@@ -1279,6 +1282,12 @@ func (e *exchange) makeExtBidResponse(adapterBids map[openrtb_ext.BidderName]*en
 			}
 		}
 		bidResponseExt.ResponseTimeMillis[bidderName] = responseExtra.ResponseTimeMillis
+		if len(responseExtra.CallTimings) > 0 {
+			if bidResponseExt.BidderCallTiming == nil {
+				bidResponseExt.BidderCallTiming = make(map[openrtb_ext.BidderName][]openrtb_ext.ExtBidderCallTiming, len(adapterExtra))
+			}
+			bidResponseExt.BidderCallTiming[bidderName] = responseExtra.CallTimings
+		}
 		// Defering the filling of bidResponseExt.Usersync[bidderName] until later
 
 	}
