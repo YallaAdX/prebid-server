@@ -1348,6 +1348,8 @@ func TestMakeExt(t *testing.T) {
 			},
 		},
 		{
+			// bidotter fork: a response that came with an error (a bad status) keeps its
+			// status and body; upstream dropped both.
 			description: "Request & Response - Error",
 			given: &httpCallInfo{
 				err: errors.New("error"),
@@ -1365,6 +1367,8 @@ func TestMakeExt(t *testing.T) {
 				Uri:            "requestUri",
 				RequestBody:    "requestBody",
 				RequestHeaders: map[string][]string{"Key1": {"value1", "value2"}},
+				ResponseBody:   "responseBody",
+				Status:         999,
 			},
 		},
 		{
