@@ -358,7 +358,7 @@ func TestRequestBidRemovesSensitiveHeaders(t *testing.T) {
 	assert.Empty(t, errs)
 	assert.Len(t, seatBids, 1)
 	assert.False(t, extraBidderRespInfo.respProcessingStartTime.IsZero())
-	assert.ElementsMatch(t, seatBids[0].HttpCalls, expectedHttpCalls)
+	assert.ElementsMatch(t, withoutResponseHeaders(t, seatBids[0].HttpCalls), expectedHttpCalls)
 }
 
 func TestSetGPCHeader(t *testing.T) {
@@ -412,7 +412,7 @@ func TestSetGPCHeader(t *testing.T) {
 	assert.Empty(t, errs)
 	assert.Len(t, seatBids, 1)
 	assert.False(t, extraBidderRespInfo.respProcessingStartTime.IsZero())
-	assert.ElementsMatch(t, seatBids[0].HttpCalls, expectedHttpCall)
+	assert.ElementsMatch(t, withoutResponseHeaders(t, seatBids[0].HttpCalls), expectedHttpCall)
 }
 
 func TestSetGPCHeaderNil(t *testing.T) {
@@ -464,7 +464,7 @@ func TestSetGPCHeaderNil(t *testing.T) {
 	assert.Empty(t, errs)
 	assert.Len(t, seatBids, 1)
 	assert.False(t, extraBidderRespInfo.respProcessingStartTime.IsZero())
-	assert.ElementsMatch(t, seatBids[0].HttpCalls, expectedHttpCall)
+	assert.ElementsMatch(t, withoutResponseHeaders(t, seatBids[0].HttpCalls), expectedHttpCall)
 }
 
 // TestMultiBidder makes sure all the requests get sent, and the responses processed.

@@ -566,6 +566,13 @@ func makeExt(httpInfo *httpCallInfo) *openrtb_ext.ExtHttpCall {
 		if httpInfo.err == nil && httpInfo.response != nil {
 			ext.ResponseBody = string(httpInfo.response.Body)
 			ext.Status = httpInfo.response.StatusCode
+			// A bidder that no-bids with an empty 204 often says why only in a header
+			// (a reason or error code, a rate-limit hint), which upstream's debug output
+			// drops. Cloned, so the debug copy never aliases the adapter's map. Only
+			// reached with debug on: makeExt is called only when HttpCalls are kept.
+			if len(httpInfo.response.Headers) > 0 {
+				ext.ResponseHeaders = httpInfo.response.Headers.Clone()
+			}
 		}
 	}
 

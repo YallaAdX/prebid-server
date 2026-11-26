@@ -110,6 +110,10 @@ type ExtHttpCall struct {
 	RequestHeaders map[string][]string `json:"requestheaders"`
 	ResponseBody   string              `json:"responsebody"`
 	Status         int                 `json:"status"`
+	// ResponseHeaders are the bidder's HTTP response headers (bidotter fork). omitempty
+	// keeps the field out of calls with no response (timeouts, errors, stored responses),
+	// so their debug output is unchanged from upstream.
+	ResponseHeaders map[string][]string `json:"responseheaders,omitempty"`
 }
 
 // CookieStatus describes the allowed values for bidresponse.ext.usersync.{bidder}.status
