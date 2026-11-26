@@ -78,6 +78,37 @@ func TestDebugResponseHeaders(t *testing.T) {
 	}
 }
 
+// TestDebugErrorStatus drives a real 503 through AdaptBidder: the httpcall keeps the
+// status, body and headers that upstream drops on a bad status.
+func TestDebugErrorStatus(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Retry-After", "5")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte("overloaded"))
+	}))
+	defer server.Close()
+
+	bidderImpl := &goodSingleBidder{
+		httpRequest: &adapters.RequestData{Method: "POST", Uri: server.URL, Body: []byte(`{}`), Headers: http.Header{}},
+		bidResponse: &adapters.BidderResponse{},
+	}
+	bidder := AdaptBidder(bidderImpl, server.Client(), &config.Configuration{}, &metricsConfig.NilMetricsEngine{}, openrtb_ext.BidderAppnexus, &config.DebugInfo{Allow: true}, "")
+	rates := currency.NewRateConverter(&http.Client{}, time.Duration(1), "", time.Duration(0)).Rates()
+	seatBids, _, errs := bidder.requestBid(context.Background(),
+		BidderRequest{BidRequest: &openrtb2.BidRequest{Imp: []openrtb2.Imp{{ID: "impId"}}}, BidderName: "test"},
+		rates, &adapters.ExtraRequestInfo{}, &adscert.NilSigner{},
+		bidRequestOptions{accountDebugAllowed: true},
+		openrtb_ext.ExtAlternateBidderCodes{}, &hookexecution.EmptyHookExecutor{}, nil)
+
+	assert.NotEmpty(t, errs, "a 503 is still reported as an error")
+	require.Len(t, seatBids, 1)
+	require.Len(t, seatBids[0].HttpCalls, 1)
+	call := seatBids[0].HttpCalls[0]
+	assert.Equal(t, http.StatusServiceUnavailable, call.Status)
+	assert.Equal(t, "overloaded", call.ResponseBody)
+	assert.Equal(t, []string{"5"}, call.ResponseHeaders["Retry-After"])
+}
+
 func TestMakeExtResponseHeaders(t *testing.T) {
 	respHeaders := http.Header{"X-Reason": {"no-fill"}}
 	info := &httpCallInfo{
@@ -92,13 +123,15 @@ func TestMakeExtResponseHeaders(t *testing.T) {
 	assert.Equal(t, []string{"no-fill"}, ext.ResponseHeaders["X-Reason"])
 
 	// An error status (doRequestImpl returns the response plus a BadServerResponse)
-	// keeps the headers: a 429's Retry-After is the point. Status/body stay upstream's.
+	// keeps status, body and headers: a 429's Retry-After is the point.
 	info.err = assert.AnError
 	info.response.StatusCode = http.StatusTooManyRequests
+	info.response.Body = []byte("slow down")
 	info.response.Headers = http.Header{"Retry-After": {"30"}}
 	onErr := makeExt(info)
 	assert.Equal(t, map[string][]string{"Retry-After": {"30"}}, onErr.ResponseHeaders)
-	assert.Zero(t, onErr.Status)
+	assert.Equal(t, http.StatusTooManyRequests, onErr.Status)
+	assert.Equal(t, "slow down", onErr.ResponseBody)
 
 	// No response at all (timeout, transport error) leaves the key out of the JSON.
 	info.response = nil

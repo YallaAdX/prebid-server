@@ -563,19 +563,22 @@ func makeExt(httpInfo *httpCallInfo) *openrtb_ext.ExtHttpCall {
 		ext.RequestBody = string(httpInfo.request.Body)
 		ext.RequestHeaders = filterHeader(httpInfo.request.Headers)
 
-		if httpInfo.err == nil && httpInfo.response != nil {
+		// Upstream fills these only when err == nil, so a bidder's 4xx/5xx showed up
+		// with no status, body or headers: a bare uri, indistinguishable from a
+		// timeout. doRequestImpl returns a response alongside an error only for a bad
+		// status (a BadServerResponse); transport errors, timeouts and a failed body
+		// read come back with no response. So "has a response" is exactly "the bidder
+		// answered", and the debug output now says what it answered (bidotter fork).
+		if httpInfo.response != nil {
 			ext.ResponseBody = string(httpInfo.response.Body)
 			ext.Status = httpInfo.response.StatusCode
-		}
-		// A bidder that no-bids with an empty 204 often says why only in a header
-		// (a reason or error code, a rate-limit hint), which upstream's debug output
-		// drops. Outside the err check: a 4xx/5xx comes back as a response plus a
-		// BadServerResponse err, and a 429's Retry-After is exactly such a header.
-		// Status and body stay as upstream has them (absent on error). Cloned, so
-		// the debug copy never aliases the adapter's map. Only reached with debug
-		// on: makeExt is called only when HttpCalls are kept.
-		if httpInfo.response != nil && len(httpInfo.response.Headers) > 0 {
-			ext.ResponseHeaders = httpInfo.response.Headers.Clone()
+			// A bidder that no-bids with an empty 204 often says why only in a header
+			// (a reason or error code, a 429's Retry-After), which upstream's debug
+			// output drops. Cloned, so the debug copy never aliases the adapter's map.
+			// Only reached with debug on: makeExt is called only when HttpCalls are kept.
+			if len(httpInfo.response.Headers) > 0 {
+				ext.ResponseHeaders = httpInfo.response.Headers.Clone()
+			}
 		}
 	}
 
