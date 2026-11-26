@@ -91,8 +91,17 @@ func TestMakeExtResponseHeaders(t *testing.T) {
 	respHeaders.Set("X-Reason", "changed")
 	assert.Equal(t, []string{"no-fill"}, ext.ResponseHeaders["X-Reason"])
 
-	// An error or no response leaves the field out of the JSON entirely.
+	// An error status (doRequestImpl returns the response plus a BadServerResponse)
+	// keeps the headers: a 429's Retry-After is the point. Status/body stay upstream's.
 	info.err = assert.AnError
+	info.response.StatusCode = http.StatusTooManyRequests
+	info.response.Headers = http.Header{"Retry-After": {"30"}}
+	onErr := makeExt(info)
+	assert.Equal(t, map[string][]string{"Retry-After": {"30"}}, onErr.ResponseHeaders)
+	assert.Zero(t, onErr.Status)
+
+	// No response at all (timeout, transport error) leaves the key out of the JSON.
+	info.response = nil
 	raw, err := json.Marshal(makeExt(info))
 	require.NoError(t, err)
 	assert.NotContains(t, string(raw), "responseheaders")
